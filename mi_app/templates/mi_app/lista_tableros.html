@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestión de Tableros</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 24px;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 24px;
+        }
+
+        th, td {
+            padding: 25px 20px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            line-height: 1.5;
+            height: 30px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-size: 20px;
+            font-weight: bold;
+            height: 40px;
+        }
+
+        tr:hover {
+            opacity: 0.9;
+        }
+
+        .ejecucion { 
+            color: orange;
+            font-weight: bold;
+        }
+        .terminado { 
+            color: blue;
+            font-weight: bold;
+        }
+        .despachado { 
+            color: green;
+            font-weight: bold;
+        }
+        
+        .urgente {
+            background-color: #f7eb7a;
+        }
+        .vencido {
+            background-color: #f66565;
+        }
+
+        a {
+            font-size: 18px;
+            color: #007bff;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        tbody tr {
+            height: 60px;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+
+        /* Añadir estilos para la transición */
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .fade-in {
+            opacity: 1;
+            transition: opacity 0.5s ease-in;
+        }
+
+        tbody tr {
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <table id="tablerosTable">
+        <thead>
+            <tr>
+                <th>Técnico</th>
+                <th>N° OT</th>
+                <th>Cliente</th>
+                <th>Nombre del Tablero</th>
+                <th>Fecha de Entrega</th>
+                <th>Días Restantes</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="tablerosBody">
+            {% for tablero in tableros %}
+            <tr class="{% if tablero.dias_restantes <= 0 %}vencido{% elif tablero.dias_restantes <= 3 %}urgente{% endif %}"
+                data-tecnico="{{ tablero.tecnico }}"
+                data-ot="{{ tablero.numero_ot }}"
+                data-cliente="{{ tablero.cliente }}"
+                data-tablero="{{ tablero.nombre_tablero }}"
+                data-fecha="{{ tablero.fecha_entrega|date:'d/m/Y' }}"
+                data-dias="{{ tablero.dias_restantes }}"
+                data-estado="{{ tablero.get_estado_display }}"
+                data-estado-class="{{ tablero.estado|lower }}">
+                <td>{{ tablero.tecnico }}</td>
+                <td>{{ tablero.numero_ot }}</td>
+                <td>{{ tablero.cliente }}</td>
+                <td>{{ tablero.nombre_tablero }}</td>
+                <td>{{ tablero.fecha_entrega|date:"d/m/Y" }}</td>
+                <td>{{ tablero.dias_restantes }}</td>
+                <td class="{{ tablero.estado|lower }}">{{ tablero.get_estado_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ROWS_PER_PAGE = 10;
+            const ROTATION_INTERVAL = 45000; // 45 segundos
+            const tbody = document.getElementById('tablerosBody');
+            const allRows = Array.from(tbody.getElementsByTagName('tr'));
+            let currentStartIndex = 0;
+
+            function showRows(startIndex) {
+                // Ocultar todas las filas con una transición
+                allRows.forEach(row => {
+                    row.style.display = 'none';
+                    row.classList.remove('fade-in');
+                });
+
+                // Mostrar las siguientes ROWS_PER_PAGE filas
+                for (let i = 0; i < ROWS_PER_PAGE; i++) {
+                    const index = (startIndex + i) % allRows.length;
+                    const row = allRows[index];
+                    if (row) {
+                        row.style.display = '';
+                        setTimeout(() => row.classList.add('fade-in'), 50);
+                    }
+                }
+            }
+
+            function rotateRows() {
+                currentStartIndex = (currentStartIndex + ROWS_PER_PAGE) % allRows.length;
+                showRows(currentStartIndex);
+            }
+
+            // Mostrar las primeras filas inmediatamente
+            showRows(0);
+
+            // Iniciar la rotación
+            setInterval(rotateRows, ROTATION_INTERVAL);
+        });
+    </script>
+    <p><a href="/admin/">Ir al panel de administración</a></p>
+</body>
+</html>
