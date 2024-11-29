@@ -44,6 +44,10 @@
             color: orange;
             font-weight: bold;
         }
+        .en-pruebas { 
+            color: purple;
+            font-weight: bold;
+        }
         .terminado { 
             color: blue;
             font-weight: bold;
@@ -54,10 +58,10 @@
         }
         
         .urgente {
-            background-color: #f7eb7a;
+            background-color: #f7ee9b;
         }
         .vencido {
-            background-color: #f66565;
+            background-color: #ff8484;
         }
 
         a {
@@ -95,6 +99,29 @@
             opacity: 1;
             transition: opacity 0.5s;
         }
+
+        .en-pruebas { 
+            color: rgb(246, 114, 246);
+            font-weight: bold;
+        }
+
+        .row-transition {
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .fade-out {
+            opacity: 0;
+        }
+        
+        .fade-in {
+            opacity: 1;
+        }
+        
+        /* Estilo para filas de relleno */
+        .filler-row {
+            background-color: #f9f9f9;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -112,13 +139,13 @@
         </thead>
         <tbody id="tablerosBody">
             {% for tablero in tableros %}
-            <tr class="{% if tablero.dias_restantes <= 0 %}vencido{% elif tablero.dias_restantes <= 3 %}urgente{% endif %}"
+            <tr class="tablero-row row-transition {% if tablero.dias_restantes <= 0 %}vencido{% elif tablero.dias_restantes <= 3 %}urgente{% endif %}"
                 data-tecnico="{{ tablero.tecnico }}"
                 data-ot="{{ tablero.numero_ot }}"
                 data-cliente="{{ tablero.cliente }}"
                 data-tablero="{{ tablero.nombre_tablero }}"
                 data-fecha="{{ tablero.fecha_entrega|date:'d/m/Y' }}"
-                data-dias="{{ tablero.dias_restantes }}"
+                data-dias="{{ tablero.dias_restantes|default:'-' }}"
                 data-estado="{{ tablero.get_estado_display }}"
                 data-estado-class="{{ tablero.estado|lower }}">
                 <td>{{ tablero.tecnico }}</td>
@@ -126,7 +153,7 @@
                 <td>{{ tablero.cliente }}</td>
                 <td>{{ tablero.nombre_tablero }}</td>
                 <td>{{ tablero.fecha_entrega|date:"d/m/Y" }}</td>
-                <td>{{ tablero.dias_restantes }}</td>
+                <td>{{ tablero.dias_restantes|default:'-' }}</td>
                 <td class="{{ tablero.estado|lower }}">{{ tablero.get_estado_display }}</td>
             </tr>
             {% endfor %}
@@ -136,31 +163,63 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ROWS_PER_PAGE = 10;
-            const ROTATION_INTERVAL = 45000; // 45 segundos
+            const ROTATION_INTERVAL = 20000; // Cambiado a 20 segundos (20000 milisegundos)
             const tbody = document.getElementById('tablerosBody');
             const allRows = Array.from(tbody.getElementsByTagName('tr'));
             let currentStartIndex = 0;
 
+            function createFillerRow() {
+                const tr = document.createElement('tr');
+                tr.className = 'filler-row row-transition';
+                for (let i = 0; i < 7; i++) {
+                    const td = document.createElement('td');
+                    td.textContent = '---';
+                    tr.appendChild(td);
+                }
+                return tr;
+            }
+
             function showRows(startIndex) {
-                // Ocultar todas las filas con una transición
-                allRows.forEach(row => {
-                    row.style.display = 'none';
-                    row.classList.remove('fade-in');
+                // Ocultar todas las filas actuales
+                Array.from(tbody.children).forEach(row => {
+                    row.classList.add('fade-out');
                 });
 
-                // Mostrar las siguientes ROWS_PER_PAGE filas
-                for (let i = 0; i < ROWS_PER_PAGE; i++) {
-                    const index = (startIndex + i) % allRows.length;
-                    const row = allRows[index];
-                    if (row) {
-                        row.style.display = '';
-                        setTimeout(() => row.classList.add('fade-in'), 50);
+                // Esperar a que termine la transición de fade out
+                setTimeout(() => {
+                    // Limpiar tbody
+                    tbody.innerHTML = '';
+
+                    // Mostrar las siguientes ROWS_PER_PAGE filas
+                    for (let i = 0; i < ROWS_PER_PAGE; i++) {
+                        let row;
+                        const index = (startIndex + i) % allRows.length;
+                        
+                        if (i < allRows.length) {
+                            // Usar una fila existente
+                            row = allRows[index].cloneNode(true);
+                        } else {
+                            // Crear fila de relleno si no hay suficientes registros
+                            row = createFillerRow();
+                        }
+
+                        row.classList.add('fade-out');
+                        tbody.appendChild(row);
                     }
-                }
+
+                    // Forzar reflow
+                    void tbody.offsetHeight;
+
+                    // Hacer aparecer las nuevas filas
+                    Array.from(tbody.children).forEach(row => {
+                        row.classList.remove('fade-out');
+                        row.classList.add('fade-in');
+                    });
+                }, 500);
             }
 
             function rotateRows() {
-                currentStartIndex = (currentStartIndex + ROWS_PER_PAGE) % allRows.length;
+                currentStartIndex = (currentStartIndex + ROWS_PER_PAGE) % Math.max(allRows.length, ROWS_PER_PAGE);
                 showRows(currentStartIndex);
             }
 

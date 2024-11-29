@@ -1,10 +1,10 @@
 from django.db import models
 from django.utils import timezone
-from datetime import date
 
 class Tablero(models.Model):
     ESTADO_CHOICES = [
         ('EJECUCION', 'Ejecución'),
+        ('EN_PRUEBAS', 'En Pruebas'),
         ('TERMINADO', 'Terminado'),
         ('DESPACHADO', 'Despachado'),
     ]
@@ -14,7 +14,7 @@ class Tablero(models.Model):
     cliente = models.CharField(max_length=100)
     nombre_tablero = models.CharField(max_length=200, verbose_name='Nombre del Tablero')
     fecha_entrega = models.DateField(verbose_name='Fecha de Entrega')
-    dias_restantes = models.IntegerField(verbose_name='Días restantes', editable=False)
+    dias_restantes = models.IntegerField(verbose_name='Días restantes', null=True, blank=True)
     estado = models.CharField(
         max_length=20, 
         choices=ESTADO_CHOICES, 
@@ -23,7 +23,10 @@ class Tablero(models.Model):
     )
 
     def calcular_dias_restantes(self):
-        hoy = date.today()
+        if self.estado == 'EN_PRUEBAS':
+            return None
+        
+        hoy = timezone.now().date()
         delta = self.fecha_entrega - hoy
         return delta.days
 

@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+    <div>
+        <h2>Importar datos desde Excel</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="default">Importar Excel</button>
+        </form>
+        
+        <br>
+        <h3>Instrucciones:</h3>
+        <ul>
+            <li>El archivo Excel debe contener las siguientes columnas:
+                <ul>
+                    <li>Técnico</li>
+                    <li>N° OT</li>
+                    <li>Cliente</li>
+                    <li>Nombre del Tablero</li>
+                    <li>Fecha de Entrega (formato: DD/MM/YYYY)</li>
+                    <li>Estado (valores permitidos: Ejecución, En Pruebas, Terminado, Despachado)</li>
+                </ul>
+            </li>
+            <li>Si una OT ya existe, se actualizarán sus datos</li>
+            <li>Las fechas pueden estar en formato DD/MM/YYYY o YYYY-MM-DD</li>
+        </ul>
+    </div>
+{% endblock %}
