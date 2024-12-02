@@ -2,10 +2,9 @@ from django.contrib import admin
 from django.urls import path
 from django.shortcuts import render, redirect
 from django.contrib import messages
-import pandas as pd
 from datetime import datetime
 from .models import Tablero
-from .forms import ExcelImportForm
+# from .forms import ExcelImportForm  # Comentar si no usarás Excel
 
 @admin.register(Tablero)
 class TableroAdmin(admin.ModelAdmin):
@@ -15,6 +14,8 @@ class TableroAdmin(admin.ModelAdmin):
     search_fields = ('numero_ot', 'cliente', 'nombre_tablero')
     readonly_fields = ('dias_restantes',)
     
+    # Comenta o elimina todo el código relacionado con import_excel si no lo usarás
+
     def get_urls(self):
         urls = super().get_urls()
         new_urls = [
