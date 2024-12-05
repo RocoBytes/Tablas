@@ -18,7 +18,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            font-size: 24px;
+            font-size: 18px;
         }
 
         th, td {
@@ -31,7 +31,7 @@
 
         th {
             background-color: #f2f2f2;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
             height: 40px;
         }
@@ -122,6 +122,10 @@
             background-color: #f9f9f9;
             color: #666;
         }
+
+        #reloj {
+            font-size: 24px;
+        }
     </style>
 </head>
 <body>
@@ -140,7 +144,7 @@
         </thead>
         <tbody id="tablerosBody">
             {% for tablero in tableros %}
-            <tr class="tablero-row row-transition {% if tablero.dias_restantes <= 0 %}vencido{% elif tablero.dias_restantes <= 3 %}urgente{% endif %}"
+            <tr class="tablero-row row-transition {% if tablero.dias_restantes < 0 %}vencido{% elif tablero.dias_restantes <= 3 and tablero.dias_restantes >= 0 %}urgente{% endif %}"
                 data-tecnico="{{ tablero.tecnico }}"
                 data-ot="{{ tablero.numero_ot }}"
                 data-cliente="{{ tablero.cliente }}"
@@ -168,8 +172,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const ROWS_PER_PAGE = 10;
-            const ROTATION_INTERVAL = 20000; // Cambiado a 20 segundos (20000 milisegundos)
+            const ROWS_PER_PAGE = 4;
+            const ROTATION_INTERVAL = 10000;
             const tbody = document.getElementById('tablerosBody');
             const allRows = Array.from(tbody.getElementsByTagName('tr'));
             let currentStartIndex = 0;

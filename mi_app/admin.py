@@ -13,6 +13,7 @@ class TableroAdmin(admin.ModelAdmin):
     list_filter = ('estado', 'tecnico')
     search_fields = ('numero_ot', 'cliente', 'nombre_tablero')
     readonly_fields = ('dias_restantes',)
+    list_per_page = 4
     
     # Comenta o elimina todo el código relacionado con import_excel si no lo usarás
 
