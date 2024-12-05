@@ -125,6 +125,7 @@
     </style>
 </head>
 <body>
+    <div id="reloj" style="font-size: 24px; text-align: right; margin: 20px; font-weight: bold; position: fixed; top: 10px; right: 20px;"></div>
     <table id="tablerosTable">
         <thead>
             <tr>
@@ -145,7 +146,7 @@
                 data-cliente="{{ tablero.cliente }}"
                 data-tablero="{{ tablero.nombre_tablero }}"
                 data-fecha="{{ tablero.fecha_entrega|date:'d/m/Y' }}"
-                data-dias="{{ tablero.dias_restantes|default:'-' }}"
+                data-dias="{{ tablero.dias_restantes }}"
                 data-estado="{{ tablero.get_estado_display }}"
                 data-estado-class="{{ tablero.estado|lower }}">
                 <td>{{ tablero.tecnico }}</td>
@@ -153,8 +154,13 @@
                 <td>{{ tablero.cliente }}</td>
                 <td>{{ tablero.nombre_tablero }}</td>
                 <td>{{ tablero.fecha_entrega|date:"d/m/Y" }}</td>
-                <td>{{ tablero.dias_restantes|default:'-' }}</td>
-                <td class="{{ tablero.estado|lower }}">{{ tablero.get_estado_display }}</td>
+                <td>{{ tablero.dias_restantes }}</td>
+                <td {% if tablero.estado == 'EN_PRUEBAS' %}class="table-success"
+                    {% elif tablero.estado == 'EJECUCION' %}
+                        {% if tablero.dias_restantes <= 3 and tablero.dias_restantes >= 0 %}class="table-warning"
+                        {% elif tablero.dias_restantes < 0 %}class="table-danger"
+                        {% endif %}
+                    {% endif %}>{{ tablero.get_estado_display }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -231,5 +237,19 @@
         });
     </script>
     <p><a href="/admin/">Ir al panel de administración</a></p>
+    <script>
+        function actualizarReloj() {
+            const ahora = new Date();
+            const hora = ahora.getHours().toString().padStart(2, '0');
+            const minutos = ahora.getMinutes().toString().padStart(2, '0');
+            const segundos = ahora.getSeconds().toString().padStart(2, '0');
+            
+            document.getElementById('reloj').innerHTML = 
+                `${hora}:${minutos}:${segundos}`;
+        }
+
+        actualizarReloj();
+        setInterval(actualizarReloj, 1000);
+    </script>
 </body>
 </html>

@@ -1,12 +1,14 @@
 from django.db import models
 from django.utils import timezone
+from datetime import date
 
 class Tablero(models.Model):
-    ESTADO_CHOICES = [
-        ('EJECUCION', 'Ejecución'),
+    ESTADOS = [
+        ('EJECUCION', 'En Ejecución'),
         ('EN_PRUEBAS', 'En Pruebas'),
         ('TERMINADO', 'Terminado'),
         ('DESPACHADO', 'Despachado'),
+        ('PAUSADO', 'Pausado'),
     ]
 
     tecnico = models.CharField(max_length=100, verbose_name='Técnico a cargo')
@@ -14,24 +16,19 @@ class Tablero(models.Model):
     cliente = models.CharField(max_length=100)
     nombre_tablero = models.CharField(max_length=200, verbose_name='Nombre del Tablero')
     fecha_entrega = models.DateField(verbose_name='Fecha de Entrega')
-    dias_restantes = models.IntegerField(verbose_name='Días restantes', null=True, blank=True)
-    estado = models.CharField(
-        max_length=20, 
-        choices=ESTADO_CHOICES, 
-        default='EJECUCION',
-        verbose_name='Estado'
-    )
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='EJECUCION')
 
-    def calcular_dias_restantes(self):
-        if self.estado == 'EN_PRUEBAS':
-            return None
+    @property
+    def dias_restantes(self):
+        if self.estado == 'PAUSADO':
+            return '-'
         
-        hoy = timezone.now().date()
-        delta = self.fecha_entrega - hoy
-        return delta.days
+        if self.fecha_entrega:
+            dias = (self.fecha_entrega - date.today()).days
+            return dias
+        return '-'
 
     def save(self, *args, **kwargs):
-        self.dias_restantes = self.calcular_dias_restantes()
         super().save(*args, **kwargs)
 
     def __str__(self):

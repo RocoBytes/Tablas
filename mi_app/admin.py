@@ -79,3 +79,7 @@ class TableroAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.save()
+
+    def get_dias_restantes(self, obj):
+        return obj.dias_restantes
+    get_dias_restantes.short_description = 'Días Restantes'

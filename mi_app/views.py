@@ -1,15 +1,15 @@
 from django.shortcuts import render
 from .models import Tablero
+from django.db.models import Q
 
 def lista_tableros(request):
-    # Filtrar tableros que estén en 'Ejecución' o 'En Pruebas'
+    # Incluir también los tableros pausados
     tableros = Tablero.objects.filter(
-        estado__in=['EJECUCION', 'EN_PRUEBAS']
+        Q(estado='EJECUCION') | 
+        Q(estado='EN_PRUEBAS') |
+        Q(estado='PAUSADO')
     ).order_by('fecha_entrega')
     
-    # Actualizar días restantes para cada tablero
-    for tablero in tableros:
-        tablero.dias_restantes = tablero.calcular_dias_restantes()
-        tablero.save()
-    
-    return render(request, 'mi_app/lista_tableros.html', {'tableros': tableros})
+    return render(request, 'mi_app/lista_tableros.html', {
+        'tableros': tableros
+    })
