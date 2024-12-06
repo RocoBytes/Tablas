@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -170,6 +171,31 @@
         </tbody>
     </table>
 
+    <!-- Nuevo contenedor para las dos mitades -->
+    <div style="display: flex; margin-top: 20px; height: calc(70vh - 200px);">
+        <div style="flex: 1; background-color: #f5f5f5; margin-right: 10px; padding: 20px; border-radius: 5px;">
+            <div style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                <video id="videoPlayer" loop style="width: 100%; height: 100%; object-fit: contain;">
+                    <source src="{% static 'videos/cablexlatam_video.mp4' %}" type="video/mp4">
+                    Tu navegador no soporta el elemento de video.
+                </video>
+            </div>
+        </div>
+        
+        <div style="flex: 1; background-color: #f5f5f5; margin-left: 10px; padding: 20px; border-radius: 5px;">
+            <div style="text-align: center; height: 100%; display: flex; align-items: center; justify-content: center;">
+                <img src="{% static 'img/Logo_Cablex.svg' %}" alt="Logo Cablex" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón movido fuera del div -->
+    <div style="text-align: center; margin-top: 20px;">
+        <button id="playButton" style="padding: 10px 20px; font-size: 18px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px;">
+            Reproducir Video
+        </button>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ROWS_PER_PAGE = 4;
@@ -254,6 +280,99 @@
 
         actualizarReloj();
         setInterval(actualizarReloj, 1000);
+    </script>
+    <script>
+        const video = document.getElementById('videoPlayer');
+        const playButton = document.getElementById('playButton');
+
+        playButton.addEventListener('click', function() {
+            if (video.paused) {
+                video.play();
+                playButton.textContent = 'Pausar Video';
+            } else {
+                video.pause();
+                playButton.textContent = 'Reproducir Video';
+            }
+        });
+
+        // Asegurarse de que el video se reproduzca en loop
+        video.addEventListener('ended', function() {
+            video.currentTime = 0;
+            video.play();
+        }, false);
+
+        // Mantener la pantalla activa
+        video.addEventListener('play', function() {
+            // Solicitar WakeLock
+            try {
+                navigator.wakeLock.request('screen').then(lock => {
+                    console.log('WakeLock activado');
+                });
+            } catch (err) {
+                console.log('WakeLock no soportado');
+            }
+        });
+    </script>
+    <script>
+        // Función para mantener la pantalla activa
+        function keepScreenAwake() {
+            // 1. Mover el cursor periódicamente
+            function moveMouse() {
+                const event = new MouseEvent('mousemove', {
+                    'view': window,
+                    'bubbles': true,
+                    'cancelable': true,
+                    'clientX': Math.random() * window.innerWidth,
+                    'clientY': Math.random() * window.innerHeight
+                });
+                document.dispatchEvent(event);
+            }
+
+            // 2. Refrescar el contenido periódicamente
+            function refreshContent() {
+                window.location.reload();
+            }
+
+            // 3. Solicitar WakeLock (como ya teníamos)
+            async function requestWakeLock() {
+                try {
+                    const wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('WakeLock activado');
+                    
+                    // Reactivar WakeLock si la página vuelve a estar visible
+                    document.addEventListener('visibilitychange', async () => {
+                        if (document.visibilityState === 'visible') {
+                            await navigator.wakeLock.request('screen');
+                        }
+                    });
+                } catch (err) {
+                    console.log('WakeLock no soportado');
+                }
+            }
+
+            // 4. Reproducir un video invisible en loop
+            const keepAliveVideo = document.createElement('video');
+            keepAliveVideo.style.position = 'fixed';
+            keepAliveVideo.style.opacity = '0.01';
+            keepAliveVideo.style.pointerEvents = 'none';
+            keepAliveVideo.style.width = '1px';
+            keepAliveVideo.style.height = '1px';
+            keepAliveVideo.setAttribute('playsinline', '');
+            keepAliveVideo.setAttribute('autoplay', '');
+            keepAliveVideo.setAttribute('muted', '');
+            keepAliveVideo.setAttribute('loop', '');
+            keepAliveVideo.src = "{% static 'videos/cablexlatam_video.mp4' %}";
+            document.body.appendChild(keepAliveVideo);
+
+            // Ejecutar todas las estrategias
+            setInterval(moveMouse, 30000);  // Mover el cursor cada 30 segundos
+            setInterval(refreshContent, 1800000);  // Refrescar la página cada 30 minutos
+            requestWakeLock();
+            keepAliveVideo.play().catch(e => console.log('Error reproduciendo video invisible:', e));
+        }
+
+        // Iniciar todas las estrategias cuando se carga la página
+        document.addEventListener('DOMContentLoaded', keepScreenAwake);
     </script>
 </body>
 </html>
