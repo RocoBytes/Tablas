@@ -127,6 +127,33 @@
         #reloj {
             font-size: 24px;
         }
+
+        @keyframes cursorMove {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(100px, 100px); }
+            50% { transform: translate(100px, 0); }
+            75% { transform: translate(0, 100px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        .cursor-simulator {
+            position: fixed;
+            width: 1px;
+            height: 1px;
+            background: transparent;
+            animation: cursorMove 10s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes subtle-movement {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(1px); }
+            100% { transform: translateY(0); }
+        }
+
+        #tablerosTable {
+            animation: subtle-movement 2s infinite;
+        }
     </style>
 </head>
 <body>
@@ -173,8 +200,8 @@
 
     <!-- Nuevo contenedor para las dos mitades -->
     <div style="display: flex; margin-top: 20px; height: calc(70vh - 200px);">
-        <div style="flex: 1; background-color: #f5f5f5; margin-right: 10px; padding: 20px; border-radius: 5px;">
-            <div style="height: 100%; display: flex; align-items: center; justify-content: center;">
+        <div style="flex: 1; margin-right: 10px; padding: 20px; border-radius: 5px;">
+            <div style="height: 100%; display: flex; align-items: flex-start; justify-content: center;">
                 <video id="videoPlayer" loop style="width: 100%; height: 100%; object-fit: contain;">
                     <source src="{% static 'videos/cablexlatam_video.mp4' %}" type="video/mp4">
                     Tu navegador no soporta el elemento de video.
@@ -182,8 +209,8 @@
             </div>
         </div>
         
-        <div style="flex: 1; background-color: #f5f5f5; margin-left: 10px; padding: 20px; border-radius: 5px;">
-            <div style="text-align: center; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <div style="flex: 1; margin-left: 10px; padding: 20px; border-radius: 5px;">
+            <div style="text-align: center; height: 100%; display: flex; align-items: flex-start; justify-content: center;">
                 <img src="{% static 'img/Logo_Cablex.svg' %}" alt="Logo Cablex" style="max-width: 90%; max-height: 90%; object-fit: contain;">
             </div>
         </div>
@@ -199,7 +226,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const ROWS_PER_PAGE = 4;
-            const ROTATION_INTERVAL = 10000;
+            const ROTATION_INTERVAL = 5000;
             const tbody = document.getElementById('tablerosBody');
             const allRows = Array.from(tbody.getElementsByTagName('tr'));
             let currentStartIndex = 0;
@@ -314,65 +341,105 @@
         });
     </script>
     <script>
-        // Función para mantener la pantalla activa
-        function keepScreenAwake() {
-            // 1. Mover el cursor periódicamente
-            function moveMouse() {
-                const event = new MouseEvent('mousemove', {
-                    'view': window,
-                    'bubbles': true,
-                    'cancelable': true,
-                    'clientX': Math.random() * window.innerWidth,
-                    'clientY': Math.random() * window.innerHeight
-                });
-                document.dispatchEvent(event);
-            }
-
-            // 2. Refrescar el contenido periódicamente
+        // Función optimizada para Smart TV LG
+        function keepScreenAwakeLG() {
+            // 1. Refrescar el contenido periódicamente (tiempo más corto)
             function refreshContent() {
                 window.location.reload();
             }
 
-            // 3. Solicitar WakeLock (como ya teníamos)
-            async function requestWakeLock() {
-                try {
-                    const wakeLock = await navigator.wakeLock.request('screen');
-                    console.log('WakeLock activado');
-                    
-                    // Reactivar WakeLock si la página vuelve a estar visible
-                    document.addEventListener('visibilitychange', async () => {
-                        if (document.visibilityState === 'visible') {
-                            await navigator.wakeLock.request('screen');
-                        }
-                    });
-                } catch (err) {
-                    console.log('WakeLock no soportado');
-                }
-            }
-
-            // 4. Reproducir un video invisible en loop
+            // 2. Video en loop con sonido (más efectivo para TV)
             const keepAliveVideo = document.createElement('video');
             keepAliveVideo.style.position = 'fixed';
-            keepAliveVideo.style.opacity = '0.01';
-            keepAliveVideo.style.pointerEvents = 'none';
+            keepAliveVideo.style.opacity = '0';
+            keepAliveVideo.style.top = '0';
+            keepAliveVideo.style.left = '0';
             keepAliveVideo.style.width = '1px';
             keepAliveVideo.style.height = '1px';
-            keepAliveVideo.setAttribute('playsinline', '');
-            keepAliveVideo.setAttribute('autoplay', '');
-            keepAliveVideo.setAttribute('muted', '');
             keepAliveVideo.setAttribute('loop', '');
+            keepAliveVideo.volume = 0.01; // Volumen muy bajo pero no mudo
             keepAliveVideo.src = "{% static 'videos/cablexlatam_video.mp4' %}";
             document.body.appendChild(keepAliveVideo);
 
-            // Ejecutar todas las estrategias
-            setInterval(moveMouse, 30000);  // Mover el cursor cada 30 segundos
-            setInterval(refreshContent, 1800000);  // Refrescar la página cada 30 minutos
-            requestWakeLock();
-            keepAliveVideo.play().catch(e => console.log('Error reproduciendo video invisible:', e));
+            // Ejecutar estrategias
+            setInterval(refreshContent, 900000); // Refrescar cada 15 minutos
+            keepAliveVideo.play().catch(e => console.log('Error reproduciendo video:', e));
         }
 
-        // Iniciar todas las estrategias cuando se carga la página
-        document.addEventListener('DOMContentLoaded', keepScreenAwake);
+        // Iniciar cuando se carga la página
+        document.addEventListener('DOMContentLoaded', keepScreenAwakeLG);
     </script>
+
+    <!-- Agregar justo después del body -->
+    <iframe id="keepAliveFrame" style="position: fixed; opacity: 0; pointer-events: none;" width="1" height="1"></iframe>
+
+    <script>
+        function refreshIframe() {
+            const frame = document.getElementById('keepAliveFrame');
+            frame.src = window.location.href + '?' + new Date().getTime();
+        }
+        setInterval(refreshIframe, 60000); // Cada minuto
+    </script>
+
+    <div class="cursor-simulator"></div>
+
+    <script>
+        if (window.Worker) {
+            const worker = new Worker("{% static 'js/keepalive-worker.js' %}");
+            worker.onmessage = function(e) {
+                console.log('Keeping alive...');
+            };
+        }
+    </script>
+
+    <script>
+        function keepAliveStorage() {
+            localStorage.setItem('lastActive', Date.now());
+            const checkActivity = setInterval(() => {
+                const lastActive = localStorage.getItem('lastActive');
+                if (Date.now() - lastActive > 60000) {
+                    window.location.reload();
+                }
+            }, 30000);
+        }
+        document.addEventListener('DOMContentLoaded', keepAliveStorage);
+    </script>
+
+    <script>
+        function createSilentAudio() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            gainNode.gain.value = 0.0001; // Prácticamente silencioso
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            setInterval(() => {
+                gainNode.gain.value = gainNode.gain.value === 0.0001 ? 0.00011 : 0.0001;
+            }, 10000);
+        }
+        
+        document.addEventListener('click', function() {
+            createSilentAudio();
+        }, { once: true });
+    </script>
+
+    <script>
+        if (window.webOS) {
+            // Prevenir que la pantalla se apague (específico para WebOS)
+            window.webOS.exec('luna://com.webos.service.power/powerState/getScreenState', 
+                {subscribe: true},
+                function(response) {
+                    if (response.state === 'Off') {
+                        window.webOS.exec('luna://com.webos.service.power/powerState/setScreenState',
+                            {state: 'On'});
+                    }
+                }
+            );
+        }
+    </script>
+
 </body>
 </html>
